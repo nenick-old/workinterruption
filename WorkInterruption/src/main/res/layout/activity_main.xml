@@ -18,7 +18,8 @@
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/work"/>
+                android:text="@string/work"
+                android:onClick="onClick" />
         <TextView
                 android:id="@+id/work_status"
                 android:layout_weight="2"
@@ -36,7 +37,8 @@
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/work_break"/>
+                android:text="@string/work_break"
+                android:onClick="onClick" />
         <TextView
                 android:id="@+id/break_status"
                 android:layout_weight="2"
@@ -54,7 +56,8 @@
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/meeting"/>
+                android:text="@string/meeting"
+                android:onClick="onClick" />
         <TextView
                 android:id="@+id/meeting_status"
                 android:layout_weight="2"
@@ -72,7 +75,8 @@
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/interrupt"/>
+                android:text="@string/interrupt"
+                android:onClick="onClick" />
         <TextView
                 android:id="@+id/interrupt_status"
                 android:layout_weight="2"

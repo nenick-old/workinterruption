@@ -6,8 +6,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     MainActivity activity;
 
-    public MainActivityTest(Class<MainActivity> activityClass) {
-        super(activityClass);
+    public MainActivityTest() {
+        super(MainActivity.class);
     }
 
     @Override
