@@ -14,7 +14,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
-import android.provider.LiveFolders;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -47,11 +46,6 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
     private static HashMap<String, String> sNotesProjectionMap;
 
     /**
-     * A projection map used to select columns from the database
-     */
-    private static HashMap<String, String> sLiveFolderProjectionMap;
-
-    /**
      * Standard projection for the interesting columns of a normal note.
      */
     private static final String[] READ_NOTE_PROJECTION = new String[] {
@@ -71,9 +65,6 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
     // The incoming URI matches the Note ID URI pattern
     private static final int NOTE_ID = 2;
-
-    // The incoming URI matches the Live Folder URI pattern
-    private static final int LIVE_FOLDER_NOTES = 3;
 
     /**
      * A UriMatcher instance
@@ -102,9 +93,6 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         // to a note ID operation
         sUriMatcher.addURI(WorkInterruption.AUTHORITY, WorkInterruption.PATH_WORKSHEET+ "/#", NOTE_ID);
 
-        // Add a pattern that routes URIs terminated with live_folders/notes to a
-        // live folder operation
-        sUriMatcher.addURI(WorkInterruption.AUTHORITY, "live_folders/" + WorkInterruption.PATH_WORKSHEET, LIVE_FOLDER_NOTES);
 
         /*
          * Creates and initializes a projection map that returns all columns
@@ -132,19 +120,6 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
                 WorkInterruption.TimeSheet.COL_END,
                 WorkInterruption.TimeSheet.COL_END);
 
-        /*
-         * Creates an initializes a projection map for handling Live Folders
-         */
-
-        // Creates a new projection map instance
-        sLiveFolderProjectionMap = new HashMap<String, String>();
-
-        // Maps "_ID" to "_ID AS _ID" for a live folder
-        sLiveFolderProjectionMap.put(LiveFolders._ID, WorkInterruption.TimeSheet._ID + " AS " + LiveFolders._ID);
-
-        // Maps "NAME" to "title AS NAME"
-        sLiveFolderProjectionMap.put(LiveFolders.NAME, WorkInterruption.TimeSheet.COL_DAY + " AS " +
-                LiveFolders.NAME);
     }
 
     /**
@@ -203,11 +178,6 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
                                 uri.getPathSegments().get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION));
                 break;
 
-            case LIVE_FOLDER_NOTES:
-                // If the incoming URI is from a live folder, chooses the live folder projection.
-                qb.setProjectionMap(sLiveFolderProjectionMap);
-                break;
-
             default:
                 // If the URI doesn't match any of the known patterns, throw an exception.
                 throw new IllegalArgumentException("Unknown URI " + uri);
@@ -262,9 +232,8 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
          */
         switch (sUriMatcher.match(uri)) {
 
-            // If the pattern is for notes or live folders, returns the general content type.
+            // If the pattern is for notes returns the general content type.
             case NOTES:
-            case LIVE_FOLDER_NOTES:
                 return WorkInterruption.TimeSheet.CONTENT_TYPE;
 
             // If the pattern is for note IDs, returns the note ID content type.
@@ -302,10 +271,9 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
          */
         switch (sUriMatcher.match(uri)) {
 
-            // If the pattern is for notes or live folders, return null. Data streams are not
+            // If the pattern is for notes return null. Data streams are not
             // supported for this type of URI.
             case NOTES:
-            case LIVE_FOLDER_NOTES:
                 return null;
 
             // If the pattern is for note IDs and the MIME filter is text/plain, then return

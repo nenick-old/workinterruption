@@ -57,10 +57,7 @@ public final class WorkInterruption
          */
         public static final int NOTE_ID_PATH_POSITION = 1;
 
-        /**
-         * Path part for the Live Folder URI
-         */
-        private static final String PATH_LIVE_FOLDER = "/live_folders/" + PATH_WORKSHEET;
+
 
         /**
          * The content:// style URL for this table
@@ -81,11 +78,7 @@ public final class WorkInterruption
         public static final Uri CONTENT_ID_URI_PATTERN
                 = Uri.parse(SCHEME + AUTHORITY + PATH_NOTE_ID + "/#");
 
-        /**
-         * The content Uri pattern for a notes listing for live folders
-         */
-        public static final Uri LIVE_FOLDER_URI
-                = Uri.parse(SCHEME + AUTHORITY + PATH_LIVE_FOLDER);
+
 
         /*
          * MIME type definitions

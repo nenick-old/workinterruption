@@ -144,10 +144,6 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         String mimeType = mMockResolver.getType(WorkInterruption.TimeSheet.CONTENT_URI);
         assertEquals(WorkInterruption.TimeSheet.CONTENT_TYPE, mimeType);
 
-        // Tests the MIME type for the live folder URI.
-        mimeType = mMockResolver.getType(WorkInterruption.TimeSheet.LIVE_FOLDER_URI);
-        assertEquals(WorkInterruption.TimeSheet.CONTENT_TYPE, mimeType);
-
         // Creates a URI with a pattern for category ids. The id doesn't have to exist.
         Uri noteIdUri = ContentUris.withAppendedId(WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE, 1);
 
@@ -168,10 +164,6 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         // Tests the notes table URI. This should return null, since the content provider does
         // not provide a stream MIME type for multiple notes.
         assertNull(mMockResolver.getStreamTypes(WorkInterruption.TimeSheet.CONTENT_URI, MIME_TYPES_ALL));
-
-        // Tests the live folders URI. This should return null, since the content provider does not
-        // provide a stream MIME type for multiple notes.
-        assertNull(mMockResolver.getStreamTypes(WorkInterruption.TimeSheet.LIVE_FOLDER_URI, MIME_TYPES_ALL));
 
         /*
          * Tests the category id URI for a single category, using _ID value "1" which is a valid ID. Uses a
