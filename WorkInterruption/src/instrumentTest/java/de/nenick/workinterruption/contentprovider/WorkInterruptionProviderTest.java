@@ -35,16 +35,16 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
 
     // Contains the test data, as an array of InterruptInfo instances.
     private final InterruptInfo[] TEST_NOTES = {
-            new InterruptInfo("Note0", "This is category 0"),
-            new InterruptInfo("Note1", "This is category 1"),
-            new InterruptInfo("Note2", "This is category 2"),
-            new InterruptInfo("Note3", "This is category 3"),
-            new InterruptInfo("Note4", "This is category 4"),
-            new InterruptInfo("Note5", "This is category 5"),
-            new InterruptInfo("Note6", "This is category 6"),
-            new InterruptInfo("Note7", "This is category 7"),
-            new InterruptInfo("Note8", "This is category 8"),
-            new InterruptInfo("Note9", "This is category 9") };
+            new InterruptInfo(START_DATE + (1 * ONE_DAY_MILLIS), "This is category 0"),
+            new InterruptInfo(START_DATE + (2 * ONE_DAY_MILLIS), "This is category 1"),
+            new InterruptInfo(START_DATE + (3 * ONE_DAY_MILLIS), "This is category 2"),
+            new InterruptInfo(START_DATE + (4 * ONE_DAY_MILLIS), "This is category 3"),
+            new InterruptInfo(START_DATE + (5 * ONE_DAY_MILLIS), "This is category 4"),
+            new InterruptInfo(START_DATE + (6 * ONE_DAY_MILLIS), "This is category 5"),
+            new InterruptInfo(START_DATE + (7 * ONE_DAY_MILLIS), "This is category 6"),
+            new InterruptInfo(START_DATE + (8 * ONE_DAY_MILLIS), "This is category 7"),
+            new InterruptInfo(START_DATE + (9 * ONE_DAY_MILLIS), "This is category 8"),
+            new InterruptInfo(START_DATE + (10 * ONE_DAY_MILLIS), "This is category 9") };
 
     // Number of milliseconds in one day (milliseconds * seconds * minutes * hours)
     private static final long ONE_DAY_MILLIS = 1000 * 60 * 60 * 24;
@@ -379,7 +379,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
 
         // Asserts that the first record in the provider (written from TEST_NOTES[0]) has the same
         // category day as the first line retrieved from the pipe.
-        assertEquals(TEST_NOTES[0].day, inputData[0]);
+        assertEquals(TEST_NOTES[0].day, Long.parseLong(inputData[0]));
 
         // Asserts that the first record in the provider (written from TEST_NOTES[0]) has the same
         // category contents as the third line retrieved from the pipe.
@@ -407,7 +407,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
                 TITLE_SELECTION + " OR " + TITLE_SELECTION + " OR " + TITLE_SELECTION;
 
         // Defines the arguments for the selection columns.
-        final String[] SELECTION_ARGS = { "Note0", "Note1", "Note5" };
+        final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[0].day), Long.toString(TEST_NOTES[1].day), Long.toString(TEST_NOTES[5].day) };
 
         // Defines a query sort order
         final String SORT_ORDER = WorkInterruption.TimeSheet.COL_DAY + " ASC";
@@ -505,7 +505,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         final String SELECTION_COLUMNS = WorkInterruption.TimeSheet.COL_DAY + " = " + "?";
 
         // Defines the argument for the selection column.
-        final String[] SELECTION_ARGS = { "Note1" };
+        final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[1].day) };
 
         // A sort order for the query.
         final String SORT_ORDER = WorkInterruption.TimeSheet.COL_DAY + " ASC";
@@ -589,7 +589,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
     public void testInserts() {
         // Creates a new category instance with ID of 30.
         InterruptInfo note = new InterruptInfo(
-                "Note30", // the category's day
+                START_DATE + (30 * ONE_DAY_MILLIS), // the category's day
                 "Test inserting a category" // the category's content
         );
 
@@ -632,7 +632,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
 
         // Tests each column in the returned cursor against the data that was inserted, comparing
         // the field in the InterruptInfo object to the data at the column index in the cursor.
-        assertEquals(note.day, cursor.getString(titleIndex));
+        assertEquals(note.day, cursor.getLong(titleIndex));
         assertEquals(note.category, cursor.getString(noteIndex));
         assertEquals(note.startDate, cursor.getLong(crdateIndex));
         assertEquals(note.ended, cursor.getLong(moddateIndex));
@@ -667,7 +667,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         final String SELECTION_COLUMNS = WorkInterruption.TimeSheet.COL_DAY + " = " + "?";
 
         // Sets the selection argument "Note0"
-        final String[] SELECTION_ARGS = { "Note0" };
+        final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[0].day) };
 
         // Tries to delete rows matching the selection criteria from the data model.
         int rowsDeleted = mMockResolver.delete(
@@ -719,7 +719,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         final String SELECTION_COLUMNS = WorkInterruption.TimeSheet.COL_DAY + " = " + "?";
 
         // Selection argument for the selection column.
-        final String[] selectionArgs = { "Note1" };
+        final String[] selectionArgs = { Long.toString(TEST_NOTES[1].day) };
 
         // Defines a map of column names and values
         ContentValues values = new ContentValues();

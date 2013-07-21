@@ -4,7 +4,7 @@ import android.content.ContentValues;
 
 // A utility for converting category data to a ContentValues map.
 public class InterruptInfo {
-    String day;
+    long day;
     String category;
     long startDate;
     long ended;
@@ -14,7 +14,7 @@ public class InterruptInfo {
      * return its values in a ContentValues map expected by data model methods.
      * The category's id is created automatically when it is inserted into the data model.
      */
-    public InterruptInfo(String t, String n) {
+    public InterruptInfo(long t, String n) {
         day = t;
         category = n;
         startDate = 0;

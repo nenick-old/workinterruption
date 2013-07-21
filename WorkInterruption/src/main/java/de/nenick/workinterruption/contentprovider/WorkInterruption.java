@@ -106,7 +106,7 @@ public final class WorkInterruption
 
         /**
          * Column name for the title of the note
-         * <P>Type: TEXT</P>
+         * <P>Type: INTEGER (long from System.curentTimeMillis())</P>
          */
         public static final String COL_DAY = "day";
 

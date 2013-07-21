@@ -8,9 +8,9 @@ public class TimeSheetTable {
     private static final String DATABASE_CREATE = "CREATE TABLE "
             + WorkInterruption.TimeSheet.TABLE_NAME + " ("
                 + WorkInterruption.TimeSheet._ID + " INTEGER PRIMARY KEY,"
-                + WorkInterruption.TimeSheet.COL_DAY + " TEXT,"
-                + WorkInterruption.TimeSheet.COL_CATEGORY + " TEXT,"
-                + WorkInterruption.TimeSheet.COL_START + " INTEGER,"
+                + WorkInterruption.TimeSheet.COL_DAY + " INTEGER not null,"
+                + WorkInterruption.TimeSheet.COL_CATEGORY + " TEXT not null,"
+                + WorkInterruption.TimeSheet.COL_START + " INTEGER not null,"
                 + WorkInterruption.TimeSheet.COL_END + " INTEGER"
             + ");";
 
