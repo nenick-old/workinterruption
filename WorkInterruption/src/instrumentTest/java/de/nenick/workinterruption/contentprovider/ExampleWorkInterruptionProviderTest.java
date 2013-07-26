@@ -21,7 +21,7 @@ import java.util.GregorianCalendar;
 /**
  * Created by nenick on 7/20/13.
  */
-public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterruptionProvider> {
+public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkInterruptionProvider> {
 
     // A URI that the provider does not offer, for testing error handling.
     private static final Uri INVALID_URI =
@@ -76,7 +76,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
      * Calls the super constructor with the class name of the provider under test and the
      * authority name of the provider.
      */
-    public WorkInterruptionProviderTest() {
+    public ExampleWorkInterruptionProviderTest() {
         super(WorkInterruptionProvider.class, WorkInterruption.AUTHORITY);
     }
 
@@ -127,8 +127,8 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
 
             // Adds a record to the database.
             mDb.insertOrThrow(
-                    WorkInterruption.TimeSheet.TABLE_NAME,             // the table name for the insert
-                    WorkInterruption.TimeSheet.COL_DAY,      // column set to null if empty values map
+                    TimeSheetTable.TABLE_NAME,             // the table name for the insert
+                    TimeSheetTable.COL_BEGAN,      // column set to null if empty values map
                     TEST_NOTES[index].getContentValues()  // the values map to insert
             );
         }
@@ -393,14 +393,14 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
     public void testQueriesOnNotesUri() {
         // Defines a projection of column names to return for a query
         final String[] TEST_PROJECTION = {
-                WorkInterruption.TimeSheet.COL_DAY,
-                WorkInterruption.TimeSheet.COL_CATEGORY,
-                WorkInterruption.TimeSheet.COL_END
+                TimeSheetTable.COL_BEGAN,
+                TimeSheetTable.COL_CATEGORY,
+                TimeSheetTable.COL_DURATION
         };
 
         // Defines a selection column for the query. When the selection columns are passed
         // to the query, the selection arguments replace the placeholders.
-        final String TITLE_SELECTION = WorkInterruption.TimeSheet.COL_DAY + " = " + "?";
+        final String TITLE_SELECTION = TimeSheetTable.COL_BEGAN + " = " + "?";
 
         // Defines the selection columns for a query.
         final String SELECTION_COLUMNS =
@@ -410,7 +410,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[0].day), Long.toString(TEST_NOTES[1].day), Long.toString(TEST_NOTES[5].day) };
 
         // Defines a query sort order
-        final String SORT_ORDER = WorkInterruption.TimeSheet.COL_DAY + " ASC";
+        final String SORT_ORDER = TimeSheetTable.COL_BEGAN + " ASC";
 
         // Query subtest 1.
         // If there are no records in the table, the returned cursor from a query should be empty.
@@ -502,20 +502,20 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
     public void testQueriesOnNoteIdUri() {
         // Defines the selection column for a query. The "?" is replaced by entries in the
         // selection argument array
-        final String SELECTION_COLUMNS = WorkInterruption.TimeSheet.COL_DAY + " = " + "?";
+        final String SELECTION_COLUMNS = TimeSheetTable.COL_BEGAN + " = " + "?";
 
         // Defines the argument for the selection column.
         final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[1].day) };
 
         // A sort order for the query.
-        final String SORT_ORDER = WorkInterruption.TimeSheet.COL_DAY + " ASC";
+        final String SORT_ORDER = TimeSheetTable.COL_BEGAN + " ASC";
 
         // Creates a projection includes the category id column, so that category id can be retrieved.
         final String[] NOTE_ID_PROJECTION = {
-                WorkInterruption.TimeSheet._ID,                 // The TimeSheet class extends BaseColumns,
+                TimeSheetTable._ID,                 // The TimeSheet class extends BaseColumns,
                 // which includes _ID as the column name for the
                 // record's id in the data model
-                WorkInterruption.TimeSheet.COL_DAY};  // The category's day
+                TimeSheetTable.COL_BEGAN};  // The category's day
 
         // Query subtest 1.
         // Tests that a query against an empty table returns null.
@@ -625,16 +625,14 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         assertTrue(cursor.moveToFirst());
 
         // Since no projection was used, get the column indexes of the returned columns
-        int titleIndex = cursor.getColumnIndex(WorkInterruption.TimeSheet.COL_DAY);
-        int noteIndex = cursor.getColumnIndex(WorkInterruption.TimeSheet.COL_CATEGORY);
-        int crdateIndex = cursor.getColumnIndex(WorkInterruption.TimeSheet.COL_START);
-        int moddateIndex = cursor.getColumnIndex(WorkInterruption.TimeSheet.COL_END);
+        int titleIndex = cursor.getColumnIndex(TimeSheetTable.COL_BEGAN);
+        int noteIndex = cursor.getColumnIndex(TimeSheetTable.COL_CATEGORY);
+        int moddateIndex = cursor.getColumnIndex(TimeSheetTable.COL_DURATION);
 
         // Tests each column in the returned cursor against the data that was inserted, comparing
         // the field in the InterruptInfo object to the data at the column index in the cursor.
         assertEquals(note.day, cursor.getLong(titleIndex));
         assertEquals(note.category, cursor.getString(noteIndex));
-        assertEquals(note.startDate, cursor.getLong(crdateIndex));
         assertEquals(note.ended, cursor.getLong(moddateIndex));
 
         // Insert subtest 2.
@@ -644,7 +642,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         ContentValues values = note.getContentValues();
 
         // Adds the category ID retrieved in subtest 1 to the ContentValues object.
-        values.put(WorkInterruption.TimeSheet._ID, (int) noteId);
+        values.put(TimeSheetTable._ID, (int) noteId);
 
         // Tries to insert this record into the table. This should fail and drop into the
         // catch block. If it succeeds, issue a failure message.
@@ -664,7 +662,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         // Tries to delete a record from a data model that is empty.
 
         // Sets the selection column
-        final String SELECTION_COLUMNS = WorkInterruption.TimeSheet.COL_DAY + " = " + "?";
+        final String SELECTION_COLUMNS = TimeSheetTable.COL_BEGAN + " = " + "?";
 
         // Sets the selection argument "Note0"
         final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[0].day) };
@@ -716,7 +714,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
      */
     public void testUpdates() {
         // Selection column for identifying a record in the data model.
-        final String SELECTION_COLUMNS = WorkInterruption.TimeSheet.COL_DAY + " = " + "?";
+        final String SELECTION_COLUMNS = TimeSheetTable.COL_BEGAN + " = " + "?";
 
         // Selection argument for the selection column.
         final String[] selectionArgs = { Long.toString(TEST_NOTES[1].day) };
@@ -728,7 +726,7 @@ public class WorkInterruptionProviderTest extends ProviderTestCase2<WorkInterrup
         // Tries to update a record in an empty table.
 
         // Sets up the update by putting the "category" column and a value into the values map.
-        values.put(WorkInterruption.TimeSheet.COL_CATEGORY, "Testing an update with this string");
+        values.put(TimeSheetTable.COL_CATEGORY, "Testing an update with this string");
 
         // Tries to update the table
         int rowsUpdated = mMockResolver.update(

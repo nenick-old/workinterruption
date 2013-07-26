@@ -1,7 +1,6 @@
 package de.nenick.workinterruption.contentprovider;
 
 import android.net.Uri;
-import android.provider.BaseColumns;
 
 /**
  * Created by nenick on 7/20/13.
@@ -19,15 +18,10 @@ public final class WorkInterruption
     /**
      * TimeSheet table contract
      */
-    public static final class TimeSheet implements BaseColumns {
+    public static final class TimeSheet {
 
         // This class cannot be instantiated
         private TimeSheet() {}
-
-        /**
-         * The table name offered by this provider
-         */
-        public static final String TABLE_NAME = "timesheet";
 
         /*
          * URI definitions
@@ -78,8 +72,6 @@ public final class WorkInterruption
         public static final Uri CONTENT_ID_URI_PATTERN
                 = Uri.parse(SCHEME + AUTHORITY + PATH_NOTE_ID + "/#");
 
-
-
         /*
          * MIME type definitions
          */
@@ -98,34 +90,7 @@ public final class WorkInterruption
         /**
          * The default sort order for this table
          */
-        public static final String DEFAULT_SORT_ORDER = TimeSheet.COL_DAY + " DESC";
+        public static final String DEFAULT_SORT_ORDER = TimeSheetTable.COL_BEGAN + " DESC";
 
-        /*
-         * Column definitions
-         */
-
-        /**
-         * Column name for the title of the note
-         * <P>Type: INTEGER (long from System.curentTimeMillis())</P>
-         */
-        public static final String COL_DAY = "day";
-
-        /**
-         * Column name of the note content
-         * <P>Type: TEXT</P>
-         */
-        public static final String COL_CATEGORY = "category";
-
-        /**
-         * Column name for the creation timestamp
-         * <P>Type: INTEGER (long from System.curentTimeMillis())</P>
-         */
-        public static final String COL_START = "start_time";
-
-        /**
-         * Column name for the modification timestamp
-         * <P>Type: INTEGER (long from System.curentTimeMillis())</P>
-         */
-        public static final String COL_END = "end_time";
     }
 }

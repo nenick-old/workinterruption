@@ -6,7 +6,6 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
@@ -23,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
 import java.util.HashMap;
 
 
@@ -49,9 +49,9 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
      * Standard projection for the interesting columns of a normal note.
      */
     private static final String[] READ_NOTE_PROJECTION = new String[] {
-            WorkInterruption.TimeSheet._ID,               // Projection position 0, the note's id
-            WorkInterruption.TimeSheet.COL_CATEGORY,  // Projection position 1, the note's content
-            WorkInterruption.TimeSheet.COL_DAY, // Projection position 2, the note's title
+            TimeSheetTable._ID,               // Projection position 0, the note's id
+            TimeSheetTable.COL_CATEGORY,  // Projection position 1, the note's content
+            TimeSheetTable.COL_BEGAN, // Projection position 2, the note's title
     };
     private static final int READ_NOTE_NOTE_INDEX = 1;
     private static final int READ_NOTE_TITLE_INDEX = 2;
@@ -61,7 +61,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
      * of the incoming URI
      */
     // The incoming URI matches the Notes URI pattern
-    private static final int NOTES = 1;
+    private static final int DOINGS = 1;
 
     // The incoming URI matches the Note ID URI pattern
     private static final int NOTE_ID = 2;
@@ -86,8 +86,8 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         // Create a new instance
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
-        // Add a pattern that routes URIs terminated with "notes" to a NOTES operation
-        sUriMatcher.addURI(WorkInterruption.AUTHORITY, WorkInterruption.PATH_WORKSHEET, NOTES);
+        // Add a pattern that routes URIs terminated with "notes" to a DOINGS operation
+        sUriMatcher.addURI(WorkInterruption.AUTHORITY, WorkInterruption.PATH_WORKSHEET, DOINGS);
 
         // Add a pattern that routes URIs terminated with "notes" plus an integer
         // to a note ID operation
@@ -101,24 +101,10 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         // Creates a new projection map instance. The map returns a column name
         // given a string. The two are usually equal.
         sNotesProjectionMap = new HashMap<String, String>();
-
-        // Maps the string "_ID" to the column name "_ID"
-        sNotesProjectionMap.put(WorkInterruption.TimeSheet._ID, WorkInterruption.TimeSheet._ID);
-
-        // Maps "title" to "title"
-        sNotesProjectionMap.put(WorkInterruption.TimeSheet.COL_DAY, WorkInterruption.TimeSheet.COL_DAY);
-
-        // Maps "note" to "note"
-        sNotesProjectionMap.put(WorkInterruption.TimeSheet.COL_CATEGORY, WorkInterruption.TimeSheet.COL_CATEGORY);
-
-        // Maps "created" to "created"
-        sNotesProjectionMap.put(WorkInterruption.TimeSheet.COL_START,
-                WorkInterruption.TimeSheet.COL_START);
-
-        // Maps "modified" to "modified"
-        sNotesProjectionMap.put(
-                WorkInterruption.TimeSheet.COL_END,
-                WorkInterruption.TimeSheet.COL_END);
+        sNotesProjectionMap.put(TimeSheetTable._ID, TimeSheetTable._ID);
+        sNotesProjectionMap.put(TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_CATEGORY);
+        sNotesProjectionMap.put(TimeSheetTable.COL_BEGAN,TimeSheetTable.COL_BEGAN);
+        sNotesProjectionMap.put(                TimeSheetTable.COL_DURATION,                TimeSheetTable.COL_DURATION);
 
     }
 
@@ -154,14 +140,14 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
         // Constructs a new query builder and sets its table name
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-        qb.setTables(WorkInterruption.TimeSheet.TABLE_NAME);
+        qb.setTables(TimeSheetTable.TABLE_NAME);
 
         /**
          * Choose the projection and adjust the "where" clause based on URI pattern-matching.
          */
         switch (sUriMatcher.match(uri)) {
             // If the incoming URI is for notes, chooses the Notes projection
-            case NOTES:
+            case DOINGS:
                 qb.setProjectionMap(sNotesProjectionMap);
                 break;
 
@@ -172,7 +158,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
             case NOTE_ID:
                 qb.setProjectionMap(sNotesProjectionMap);
                 qb.appendWhere(
-                        WorkInterruption.TimeSheet._ID +    // the name of the ID column
+                        TimeSheetTable._ID +    // the name of the ID column
                                 "=" +
                                 // the position of the note ID itself in the incoming URI
                                 uri.getPathSegments().get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION));
@@ -233,7 +219,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         switch (sUriMatcher.match(uri)) {
 
             // If the pattern is for notes returns the general content type.
-            case NOTES:
+            case DOINGS:
                 return WorkInterruption.TimeSheet.CONTENT_TYPE;
 
             // If the pattern is for note IDs, returns the note ID content type.
@@ -273,7 +259,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
             // If the pattern is for notes return null. Data streams are not
             // supported for this type of URI.
-            case NOTES:
+            case DOINGS:
                 return null;
 
             // If the pattern is for note IDs and the MIME filter is text/plain, then return
@@ -380,57 +366,31 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
 
     /**
-     * This is called when a client calls
-     * {@link android.content.ContentResolver#insert(Uri, ContentValues)}.
-     * Inserts a new row into the database. This method sets up default values for any
-     * columns that are not included in the incoming map.
-     * If rows were inserted, then listeners are notified of the change.
-     * @return The row ID of the inserted row.
-     * @throws SQLException if the insertion fails.
+
      */
     @Override
     public Uri insert(Uri uri, ContentValues initialValues) {
 
         // Validates the incoming URI. Only the full provider URI is allowed for inserts.
-        if (sUriMatcher.match(uri) != NOTES) {
+        if (sUriMatcher.match(uri) != DOINGS) {
             throw new IllegalArgumentException("Unknown URI " + uri);
         }
 
-        // A map to hold the new record's values.
-        ContentValues values;
-
-        // If the incoming values map is not null, uses it for the new values.
-        if (initialValues != null) {
-            values = new ContentValues(initialValues);
-
-        } else {
-            // Otherwise, create a new value map
-            values = new ContentValues();
+        if(initialValues == null) {
+            throw new IllegalArgumentException("Missing values for URI " + uri);
         }
 
-        // Gets the current system time in milliseconds
-        Long now = Long.valueOf(System.currentTimeMillis());
+        // Hold the extended record's values.
+        ContentValues values = new ContentValues(initialValues);
 
         // If the values map doesn't contain the creation date, sets the value to the current time.
-        if (values.containsKey(WorkInterruption.TimeSheet.COL_START) == false) {
-            values.put(WorkInterruption.TimeSheet.COL_START, now);
-        }
-
-        // If the values map doesn't contain the modification date, sets the value to the current
-        // time.
-        if (values.containsKey(WorkInterruption.TimeSheet.COL_END) == false) {
-            values.put(WorkInterruption.TimeSheet.COL_END, now);
-        }
-
-        // If the values map doesn't contain a title, sets the value to the default title.
-        if (values.containsKey(WorkInterruption.TimeSheet.COL_DAY) == false) {
-            Resources r = Resources.getSystem();
-            values.put(WorkInterruption.TimeSheet.COL_DAY, r.getString(android.R.string.untitled));
+        if (values.containsKey(TimeSheetTable.COL_BEGAN) == false) {
+            values.put(TimeSheetTable.COL_BEGAN, Calendar.getInstance().getTimeInMillis());
         }
 
         // If the values map doesn't contain note text, sets the value to an empty string.
-        if (values.containsKey(WorkInterruption.TimeSheet.COL_CATEGORY) == false) {
-            values.put(WorkInterruption.TimeSheet.COL_CATEGORY, "");
+        if (values.containsKey(TimeSheetTable.COL_CATEGORY) == false) {
+            throw new IllegalArgumentException("Missing value for category");
         }
 
         // Opens the database object in "write" mode.
@@ -438,8 +398,8 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
         // Performs the insert and returns the ID of the new note.
         long rowId = db.insert(
-                WorkInterruption.TimeSheet.TABLE_NAME,        // The table to insert into.
-                WorkInterruption.TimeSheet.COL_CATEGORY,  // A hack, SQLite sets this column value to null
+                TimeSheetTable.TABLE_NAME,        // The table to insert into.
+                TimeSheetTable.COL_CATEGORY,  // A hack, SQLite sets this column value to null
                 // if values is empty.
                 values                           // A map of column names, and the values to insert
                 // into the columns.
@@ -486,9 +446,9 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
             // If the incoming pattern matches the general pattern for notes, does a delete
             // based on the incoming "where" columns and arguments.
-            case NOTES:
+            case DOINGS:
                 count = db.delete(
-                        WorkInterruption.TimeSheet.TABLE_NAME,  // The database table name
+                        TimeSheetTable.TABLE_NAME,  // The database table name
                         where,                     // The incoming where clause column names
                         whereArgs                  // The incoming where clause values
                 );
@@ -503,7 +463,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
                  * desired note ID.
                  */
                 finalWhere =
-                        WorkInterruption.TimeSheet._ID +                              // The ID column name
+                        TimeSheetTable._ID +                              // The ID column name
                                 " = " +                                          // test for equality
                                 uri.getPathSegments().                           // the incoming note ID
                                         get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION)
@@ -517,7 +477,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
                 // Performs the delete.
                 count = db.delete(
-                        WorkInterruption.TimeSheet.TABLE_NAME,  // The database table name.
+                        TimeSheetTable.TABLE_NAME,  // The database table name.
                         finalWhere,                // The final WHERE clause
                         whereArgs                  // The incoming where clause values.
                 );
@@ -571,11 +531,11 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
             // If the incoming URI matches the general notes pattern, does the update based on
             // the incoming data.
-            case NOTES:
+            case DOINGS:
 
                 // Does the update and returns the number of rows updated.
                 count = db.update(
-                        WorkInterruption.TimeSheet.TABLE_NAME, // The database table name.
+                        TimeSheetTable.TABLE_NAME, // The database table name.
                         values,                   // A map of column names and new values to use.
                         where,                    // The where clause column names.
                         whereArgs                 // The where clause column values to select on.
@@ -593,7 +553,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
                  * note ID.
                  */
                 finalWhere =
-                        WorkInterruption.TimeSheet._ID +                              // The ID column name
+                        TimeSheetTable._ID +                              // The ID column name
                                 " = " +                                          // test for equality
                                 uri.getPathSegments().                           // the incoming note ID
                                         get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION)
@@ -608,7 +568,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
                 // Does the update and returns the number of rows updated.
                 count = db.update(
-                        WorkInterruption.TimeSheet.TABLE_NAME, // The database table name.
+                        TimeSheetTable.TABLE_NAME, // The database table name.
                         values,                   // A map of column names and new values to use.
                         finalWhere,               // The final WHERE clause to use
                         // placeholders for whereArgs

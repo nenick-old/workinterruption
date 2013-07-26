@@ -40,10 +40,9 @@ public class InterruptInfo {
         ContentValues v = new ContentValues();
 
         // Adds map entries for the user-controlled fields in the map
-        v.put(WorkInterruption.TimeSheet.COL_DAY, day);
-        v.put(WorkInterruption.TimeSheet.COL_CATEGORY, category);
-        v.put(WorkInterruption.TimeSheet.COL_START, startDate);
-        v.put(WorkInterruption.TimeSheet.COL_END, ended);
+        v.put(TimeSheetTable.COL_BEGAN, day);
+        v.put(TimeSheetTable.COL_CATEGORY, category);
+        v.put(TimeSheetTable.COL_DURATION, ended);
         return v;
 
     }

@@ -7,7 +7,6 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.app.Activity;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -15,9 +14,9 @@ import android.view.MenuItem;
 import android.support.v4.app.NavUtils;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
+import de.nenick.workinterruption.contentprovider.TimeSheetTable;
 import de.nenick.workinterruption.contentprovider.WorkInterruption;
 import de.nenick.workinterruption.contentprovider.WorkInterruptionProvider;
 
@@ -101,18 +100,13 @@ public class ListActivity extends android.app.ListActivity implements
         startActivity(i);
     }
 
-
     private void fillData() {
 
-        // Fields from the database (projection)
-        // Must include the _id column for the adapter to work
-        String[] from = new String[]{WorkInterruption.TimeSheet.COL_CATEGORY};
-        // Fields on the UI to which we map
-        int[] to = new int[]{R.id.label};
+        String[] from = {TimeSheetTable.COL_BEGAN, TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_DURATION};
+        int[] to = new int[]{R.id.began, R.id.category, R.id.duration};
 
         getLoaderManager().initLoader(0, null, this);
-        adapter = new SimpleCursorAdapter(this, R.layout.todo_row, null, from,
-                to, 0);
+        adapter = new SimpleCursorAdapter(this, R.layout.doing_row, null, from, to, 0);
 
         setListAdapter(adapter);
     }
@@ -127,7 +121,8 @@ public class ListActivity extends android.app.ListActivity implements
     // Creates a new loader after the initLoader () call
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection = {WorkInterruption.TimeSheet._ID, WorkInterruption.TimeSheet.COL_CATEGORY};
+
+        String[] projection = {TimeSheetTable._ID, TimeSheetTable.COL_BEGAN, TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_DURATION};
         CursorLoader cursorLoader = new CursorLoader(this,
                 WorkInterruption.TimeSheet.CONTENT_URI, projection, null, null, null);
         return cursorLoader;

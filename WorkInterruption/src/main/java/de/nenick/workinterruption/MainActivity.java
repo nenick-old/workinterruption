@@ -10,8 +10,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import de.nenick.workinterruption.contentprovider.TimeSheetTable;
 import de.nenick.workinterruption.contentprovider.WorkInterruption;
-import de.nenick.workinterruption.contentprovider.WorkInterruptionProvider;
 
 public class MainActivity extends Activity {
 
@@ -39,9 +39,8 @@ public class MainActivity extends Activity {
             isWorkActive = switchState(R.id.work_status, isWorkActive);
 
             ContentValues v = new ContentValues();
-            v.put(WorkInterruption.TimeSheet.COL_DAY, System.currentTimeMillis());
-            v.put(WorkInterruption.TimeSheet.COL_CATEGORY, "Test inserting a category");
-            v.put(WorkInterruption.TimeSheet.COL_START, System.currentTimeMillis());
+            v.put(TimeSheetTable.COL_CATEGORY, "Test inserting a category");
+            v.put(TimeSheetTable.COL_BEGAN, System.currentTimeMillis());
 
             Uri rowUri = getContentResolver().insert(WorkInterruption.TimeSheet.CONTENT_URI, v);
         }
