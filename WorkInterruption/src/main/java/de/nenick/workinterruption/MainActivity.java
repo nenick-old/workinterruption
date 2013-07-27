@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_list:
-                Intent i = new Intent(this, ListActivity.class);
+                Intent i = new Intent(this, DoingListActivity.class);
                 startActivity(i);
                 return true;
         }

@@ -31,7 +31,7 @@
         </provider>
 
         <activity
-            android:name="de.nenick.workinterruption.ListActivity"
+            android:name=".DoingListActivity"
             android:label="@string/title_activity_list"
             android:parentActivityName="MainActivity" >
             <meta-data
