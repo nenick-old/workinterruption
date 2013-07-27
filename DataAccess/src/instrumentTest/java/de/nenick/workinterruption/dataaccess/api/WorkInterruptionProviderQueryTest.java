@@ -1,9 +1,10 @@
-package de.nenick.workinterruption.dataaccess;
+package de.nenick.workinterruption.dataaccess.api;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.test.ProviderTestCase2;
 
+import de.nenick.workinterruption.dataaccess.TimeSheetTable;
 import de.nenick.workinterruption.dataaccess.api.WorkInterruption;
 import de.nenick.workinterruption.dataaccess.api.WorkInterruptionProvider;
 
