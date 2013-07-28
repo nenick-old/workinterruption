@@ -19,10 +19,7 @@ public class GetDoingListFunction {
      */
     public void apply(Activity activity, ListView listView) {
 
-        String[] dataToShow = {TimeSheetTable.COL_BEGAN, TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_DURATION};
-        int[] targetFields = new int[]{R.id.began, R.id.category, R.id.duration};
-
-        CursorAdapter adapter = new SimpleCursorAdapter(listView.getContext(), R.layout.doing_row, null, dataToShow, targetFields, 0);
+        CursorAdapter adapter = new GetDoingListCursorAdapter(listView.getContext(), null, 0);
         listView.setAdapter(adapter);
 
         GetDoingListDataLoader dataLoader = new GetDoingListDataLoader();

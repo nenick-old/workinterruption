@@ -26,7 +26,7 @@ public class TimeSheetTable implements BaseColumns {
 
     /**
      * Column name for the duration of this doing
-     * <P>Type: INTEGER (minutes)</P>
+     * <P>Type: INTEGER (milliseconds)</P>
      */
     public static final String COL_DURATION = "duration";
 

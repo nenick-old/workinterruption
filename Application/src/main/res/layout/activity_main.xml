@@ -10,80 +10,50 @@
         android:paddingBottom="@dimen/activity_vertical_margin"
         tools:context=".MainActivity">
 
-    <LinearLayout
+    <Switch
+            android:id="@+id/work_toggle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        <Button
-                android:id="@+id/work_toggle"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/work"
-                android:onClick="onClick" />
-        <TextView
-                android:id="@+id/work_status"
-                android:layout_weight="2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:text="@string/status_stopped"/>
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:switchMinWidth="250dp"
+            android:textOn="@string/status_active"
+            android:textOff="@string/status_stopped"
+            android:thumb="@drawable/ic_launcher"
+            android:track="@drawable/ic_launcher"
+            android:text="@string/work" />
 
-    <LinearLayout
+    <Switch
+            android:id="@+id/break_toggle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        <Button
-                android:id="@+id/break_toggle"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/work_break"
-                android:onClick="onClick" />
-        <TextView
-                android:id="@+id/break_status"
-                android:layout_weight="2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:text="@string/status_stopped"/>
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:switchMinWidth="250dp"
+            android:textOn="@string/status_active"
+            android:textOff="@string/status_stopped"
+            android:thumb="@drawable/ic_launcher"
+            android:track="@drawable/ic_launcher"
+            android:text="@string/work_break" />
 
-    <LinearLayout
+    <Switch
+            android:id="@+id/meeting_toggle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        <Button
-                android:id="@+id/meeting_toggle"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/meeting"
-                android:onClick="onClick" />
-        <TextView
-                android:id="@+id/meeting_status"
-                android:layout_weight="2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:text="@string/status_stopped"/>
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:switchMinWidth="250dp"
+            android:textOn="@string/status_active"
+            android:textOff="@string/status_stopped"
+            android:thumb="@drawable/ic_launcher"
+            android:track="@drawable/ic_launcher"
+            android:text="@string/meeting" />
 
-    <LinearLayout
+    <Switch
+            android:id="@+id/interrupt_toggle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        <Button
-                android:id="@+id/interrupt_toggle"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/interrupt"
-                android:onClick="onClick" />
-        <TextView
-                android:id="@+id/interrupt_status"
-                android:layout_weight="2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:text="@string/status_stopped"/>
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:switchMinWidth="250dp"
+            android:textOn="@string/status_active"
+            android:textOff="@string/status_stopped"
+            android:thumb="@drawable/ic_launcher"
+            android:track="@drawable/ic_launcher"
+            android:text="@string/interrupt" />
+
+
 
 </LinearLayout>

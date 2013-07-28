@@ -6,6 +6,7 @@ import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 
 import de.nenick.workinterruption.R;
 import de.nenick.workinterruption.application.functions.DeleteDoingFunction;
@@ -21,6 +22,9 @@ public class DoingListActivity extends android.app.ListActivity  {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+
         setContentView(R.layout.doing_list);
         setupActionBar();
 

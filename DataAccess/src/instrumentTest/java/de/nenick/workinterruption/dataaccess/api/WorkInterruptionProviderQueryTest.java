@@ -24,7 +24,7 @@ public class WorkInterruptionProviderQueryTest extends ProviderTestCase2 {
 
         // when: query for list
         String[] projection = {TimeSheetTable._ID, TimeSheetTable.COL_BEGAN, TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_DURATION};
-        Cursor result = getProvider().query(WorkInterruption.TimeSheet.CONTENT_URI, projection, null, null, null);
+        Cursor result = getProvider().query(WorkInterruption.TimeSheet.CONTENT_URI, projection, TimeSheetTable.COL_DURATION + " = ?s ", new String[] {"ff"}, null);
 
         // then: the result contains all records
         assertEquals(2, result.getCount());
