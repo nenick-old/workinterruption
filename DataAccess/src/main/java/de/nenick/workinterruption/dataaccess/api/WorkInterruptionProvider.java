@@ -25,107 +25,71 @@ import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
 import java.util.HashMap;
 
-import de.nenick.workinterruption.dataaccess.TimeSheetTable;
-import de.nenick.workinterruption.dataaccess.WorkInterruptionSQLite;
-import de.nenick.workinterruption.dataaccess.api.WorkInterruption;
+import de.nenick.workinterruption.dataaccess.database.SQLiteHelper;
+import de.nenick.workinterruption.dataaccess.database.TaskTable;
 
 
 public class WorkInterruptionProvider extends ContentProvider implements ContentProvider.PipeDataWriter<Cursor> {
-    // Used for debugging and logging
-    private static final String TAG = "NotePadProvider";
 
-    /**
-     * The database that the provider uses as its underlying data store
-     */
-    private static final String DATABASE_NAME = "note_pad.db";
+    /** A projection map used to select columns from the database */
+    private static HashMap<String, String> stasksProjectionMap;
 
-    /**
-     * The database version
-     */
-    private static final int DATABASE_VERSION = 2;
-
-    /**
-     * A projection map used to select columns from the database
-     */
-    private static HashMap<String, String> sNotesProjectionMap;
-
-    /**
-     * Standard projection for the interesting columns of a normal note.
-     */
-    private static final String[] READ_NOTE_PROJECTION = new String[] {
-            TimeSheetTable._ID,               // Projection position 0, the note's id
-            TimeSheetTable.COL_CATEGORY,  // Projection position 1, the note's content
-            TimeSheetTable.COL_BEGAN, // Projection position 2, the note's title
+    /** Standard projection for the interesting columns of a normal task. */
+    private static final String[] READ_TASK_PROJECTION = new String[] {
+            TaskTable._ID,               // Projection position 0, the task's id
+            TaskTable.COL_CATEGORY,  // Projection position 1, the task's content
+            TaskTable.COL_STARTED, // Projection position 2, the task's title
     };
-    private static final int READ_NOTE_NOTE_INDEX = 1;
-    private static final int READ_NOTE_TITLE_INDEX = 2;
+
+    private static final int READ_task_task_INDEX = 1;
+    private static final int READ_task_TITLE_INDEX = 2;
 
     /*
      * Constants used by the Uri matcher to choose an action based on the pattern
      * of the incoming URI
      */
-    // The incoming URI matches the Notes URI pattern
-    private static final int DOINGS = 1;
 
-    // The incoming URI matches the Note ID URI pattern
-    private static final int NOTE_ID = 2;
+    // The incoming URI matches the tasks URI pattern
+    private static final int TASKS = 1;
 
-    /**
-     * A UriMatcher instance
-     */
+    // The incoming URI matches the task ID URI pattern
+    private static final int TASK_ID = 2;
+
+    /** A UriMatcher instance  */
     private static final UriMatcher sUriMatcher;
 
     // Handle to a new DatabaseHelper.
-    private WorkInterruptionSQLite mOpenHelper;
+    private SQLiteHelper mOpenHelper;
 
 
-    /**
-     * A block that instantiates and sets static objects
-     */
+    /** A block that instantiates and sets static objects */
     static {
-
-        /*
-         * Creates and initializes the URI matcher
-         */
-        // Create a new instance
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+        // Add a pattern that routes URIs terminated with "tasks" to a TASKS operation
+        sUriMatcher.addURI(WorkInterruption.AUTHORITY, WorkInterruption.PATH_TASK, TASKS);
+        // Add a pattern that routes URIs terminated with "tasks" plus an integer
+        // to a task ID operation
+        sUriMatcher.addURI(WorkInterruption.AUTHORITY, WorkInterruption.PATH_TASK + "/#", TASK_ID);
 
-        // Add a pattern that routes URIs terminated with "notes" to a DOINGS operation
-        sUriMatcher.addURI(WorkInterruption.AUTHORITY, WorkInterruption.PATH_WORKSHEET, DOINGS);
-
-        // Add a pattern that routes URIs terminated with "notes" plus an integer
-        // to a note ID operation
-        sUriMatcher.addURI(WorkInterruption.AUTHORITY, WorkInterruption.PATH_WORKSHEET+ "/#", NOTE_ID);
-
-
-        /*
-         * Creates and initializes a projection map that returns all columns
-         */
+        /* Creates and initializes a projection map that returns all columns */
 
         // Creates a new projection map instance. The map returns a column name
         // given a string. The two are usually equal.
-        sNotesProjectionMap = new HashMap<String, String>();
-        sNotesProjectionMap.put(TimeSheetTable._ID, TimeSheetTable._ID);
-        sNotesProjectionMap.put(TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_CATEGORY);
-        sNotesProjectionMap.put(TimeSheetTable.COL_BEGAN,TimeSheetTable.COL_BEGAN);
-        sNotesProjectionMap.put(                TimeSheetTable.COL_DURATION,                TimeSheetTable.COL_DURATION);
-
+        stasksProjectionMap = new HashMap<String, String>();
+        stasksProjectionMap.put(TaskTable._ID, TaskTable._ID);
+        stasksProjectionMap.put(TaskTable.COL_CATEGORY, TaskTable.COL_CATEGORY);
+        stasksProjectionMap.put(TaskTable.COL_STARTED, TaskTable.COL_STARTED);
+        stasksProjectionMap.put(TaskTable.COL_DURATION, TaskTable.COL_DURATION);
     }
 
     /**
-     *
      * Initializes the provider by creating a new DatabaseHelper. onCreate() is called
      * automatically when Android creates the provider in response to a resolver request from a
      * client.
      */
     @Override
     public boolean onCreate() {
-
-        // Creates a new helper object. Note that the database itself isn't opened until
-        // something tries to access it, and it's only created if it doesn't already exist.
-        mOpenHelper = new WorkInterruptionSQLite(getContext());
-
-        // Assumes that any failures will be reported by a thrown exception.
+        mOpenHelper = new SQLiteHelper(getContext());
         return true;
     }
 
@@ -144,28 +108,26 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
         // Constructs a new query builder and sets its table name
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-        qb.setTables(TimeSheetTable.TABLE_NAME);
+        qb.setTables(TaskTable.TABLE_NAME);
 
-        /**
-         * Choose the projection and adjust the "where" clause based on URI pattern-matching.
-         */
+        /* Choose the projection and adjust the "where" clause based on URI pattern-matching. */
         switch (sUriMatcher.match(uri)) {
-            // If the incoming URI is for notes, chooses the Notes projection
-            case DOINGS:
-                qb.setProjectionMap(sNotesProjectionMap);
+            // If the incoming URI is for tasks, chooses the tasks projection
+            case TASKS:
+                qb.setProjectionMap(stasksProjectionMap);
                 break;
 
-           /* If the incoming URI is for a single note identified by its ID, chooses the
-            * note ID projection, and appends "_ID = <noteID>" to the where clause, so that
-            * it selects that single note
+           /* If the incoming URI is for a single task identified by its ID, chooses the
+            * task ID projection, and appends "_ID = <taskID>" to the where clause, so that
+            * it selects that single task
             */
-            case NOTE_ID:
-                qb.setProjectionMap(sNotesProjectionMap);
+            case TASK_ID:
+                qb.setProjectionMap(stasksProjectionMap);
                 qb.appendWhere(
-                        TimeSheetTable._ID +    // the name of the ID column
+                        TaskTable._ID +    // the name of the ID column
                                 "=" +
-                                // the position of the note ID itself in the incoming URI
-                                uri.getPathSegments().get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION));
+                                // the position of the task ID itself in the incoming URI
+                                uri.getPathSegments().get(WorkInterruption.Task.PATH_POSITION_TASK_ID));
                 break;
 
             default:
@@ -177,7 +139,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         String orderBy;
         // If no sort order is specified, uses the default
         if (TextUtils.isEmpty(sortOrder)) {
-            orderBy = WorkInterruption.TimeSheet.DEFAULT_SORT_ORDER;
+            orderBy = WorkInterruption.Task.DEFAULT_SORT_ORDER;
         } else {
             // otherwise, uses the incoming sort order
             orderBy = sortOrder;
@@ -217,18 +179,16 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
     @Override
     public String getType(Uri uri) {
 
-        /**
-         * Chooses the MIME type based on the incoming URI pattern
-         */
+        /* Chooses the MIME type based on the incoming URI pattern */
         switch (sUriMatcher.match(uri)) {
 
-            // If the pattern is for notes returns the general content type.
-            case DOINGS:
-                return WorkInterruption.TimeSheet.CONTENT_TYPE;
+            // If the pattern is for tasks returns the general content type.
+            case TASKS:
+                return WorkInterruption.Task.CONTENT_TYPE;
 
-            // If the pattern is for note IDs, returns the note ID content type.
-            case NOTE_ID:
-                return WorkInterruption.TimeSheet.CONTENT_ITEM_TYPE;
+            // If the pattern is for task IDs, returns the task ID content type.
+            case TASK_ID:
+                return WorkInterruption.Task.CONTENT_ITEM_TYPE;
 
             // If the URI pattern doesn't match any permitted patterns, throws an exception.
             default:
@@ -238,15 +198,15 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
 
     /**
-     * This describes the MIME types that are supported for opening a note
+     * This describes the MIME types that are supported for opening a task
      * URI as a stream.
      */
-    static ClipDescription NOTE_STREAM_TYPES = new ClipDescription(null,
+    static ClipDescription TASK_STREAM_TYPES = new ClipDescription(null,
             new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN });
 
     /**
-     * Returns the types of available data streams.  URIs to specific notes are supported.
-     * The application can convert such a note to a plain text stream.
+     * Returns the types of available data streams.  URIs to specific tasks are supported.
+     * The application can convert such a task to a plain text stream.
      *
      * @param uri the URI to analyze
      * @param mimeTypeFilter The MIME type to check for. This method only returns a data stream
@@ -261,15 +221,15 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
          */
         switch (sUriMatcher.match(uri)) {
 
-            // If the pattern is for notes return null. Data streams are not
+            // If the pattern is for tasks return null. Data streams are not
             // supported for this type of URI.
-            case DOINGS:
+            case TASKS:
                 return null;
 
-            // If the pattern is for note IDs and the MIME filter is text/plain, then return
+            // If the pattern is for task IDs and the MIME filter is text/plain, then return
             // text/plain
-            case NOTE_ID:
-                return NOTE_STREAM_TYPES.filterMimeTypes(mimeTypeFilter);
+            case TASK_ID:
+                return TASK_STREAM_TYPES.filterMimeTypes(mimeTypeFilter);
 
             // If the URI pattern doesn't match any permitted patterns, throws an exception.
             default:
@@ -302,11 +262,11 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         // If the MIME type is supported
         if (mimeTypes != null) {
 
-            // Retrieves the note for this URI. Uses the query method defined for this provider,
+            // Retrieves the task for this URI. Uses the query method defined for this provider,
             // rather than using the database query method.
             Cursor c = query(
-                    uri,                    // The URI of a note
-                    READ_NOTE_PROJECTION,   // Gets a projection containing the note's ID, title,
+                    uri,                    // The URI of a task
+                    READ_TASK_PROJECTION,   // Gets a projection containing the task's ID, title,
                     // and contents
                     null,                   // No WHERE clause, get all matching records
                     null,                   // Since there is no WHERE clause, no selection criteria
@@ -345,17 +305,17 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
     @Override
     public void writeDataToPipe(ParcelFileDescriptor output, Uri uri, String mimeType,
                                 Bundle opts, Cursor c) {
-        // We currently only support conversion-to-text from a single note entry,
+        // We currently only support conversion-to-text from a single task entry,
         // so no need for cursor data type checking here.
         FileOutputStream fout = new FileOutputStream(output.getFileDescriptor());
         PrintWriter pw = null;
         try {
             pw = new PrintWriter(new OutputStreamWriter(fout, "UTF-8"));
-            pw.println(c.getString(READ_NOTE_TITLE_INDEX));
+            pw.println(c.getString(READ_task_TITLE_INDEX));
             pw.println("");
-            pw.println(c.getString(READ_NOTE_NOTE_INDEX));
+            pw.println(c.getString(READ_task_task_INDEX));
         } catch (UnsupportedEncodingException e) {
-            Log.w(TAG, "Ooops", e);
+            Log.w(getClass().getName(), e);
         } finally {
             c.close();
             if (pw != null) {
@@ -376,7 +336,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
     public Uri insert(Uri uri, ContentValues initialValues) {
 
         // Validates the incoming URI. Only the full provider URI is allowed for inserts.
-        if (sUriMatcher.match(uri) != DOINGS) {
+        if (sUriMatcher.match(uri) != TASKS) {
             throw new IllegalArgumentException("Unknown URI " + uri);
         }
 
@@ -388,22 +348,22 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         ContentValues values = new ContentValues(initialValues);
 
         // If the values map doesn't contain the creation date, sets the value to the current time.
-        if (values.containsKey(TimeSheetTable.COL_BEGAN) == false) {
-            values.put(TimeSheetTable.COL_BEGAN, Calendar.getInstance().getTimeInMillis());
+        if (values.containsKey(TaskTable.COL_STARTED) == false) {
+            values.put(TaskTable.COL_STARTED, Calendar.getInstance().getTimeInMillis());
         }
 
-        // If the values map doesn't contain note text, sets the value to an empty string.
-        if (values.containsKey(TimeSheetTable.COL_CATEGORY) == false) {
+        // If the values map doesn't contain task text, sets the value to an empty string.
+        if (values.containsKey(TaskTable.COL_CATEGORY) == false) {
             throw new IllegalArgumentException("Missing value for category");
         }
 
         // Opens the database object in "write" mode.
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-        // Performs the insert and returns the ID of the new note.
+        // Performs the insert and returns the ID of the new task.
         long rowId = db.insert(
-                TimeSheetTable.TABLE_NAME,        // The table to insert into.
-                TimeSheetTable.COL_CATEGORY,  // A hack, SQLite sets this column value to null
+                TaskTable.TABLE_NAME,        // The table to insert into.
+                TaskTable.COL_CATEGORY,  // A hack, SQLite sets this column value to null
                 // if values is empty.
                 values                           // A map of column names, and the values to insert
                 // into the columns.
@@ -411,12 +371,12 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
         // If the insert succeeded, the row ID exists.
         if (rowId > 0) {
-            // Creates a URI with the note ID pattern and the new row ID appended to it.
-            Uri noteUri = ContentUris.withAppendedId(WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE, rowId);
+            // Creates a URI with the task ID pattern and the new row ID appended to it.
+            Uri contentUri = ContentUris.withAppendedId(WorkInterruption.Task.CONTENT_ID_URI_BASE, rowId);
 
             // Notifies observers registered against this provider that the data changed.
-            getContext().getContentResolver().notifyChange(noteUri, null);
-            return noteUri;
+            getContext().getContentResolver().notifyChange(contentUri, null);
+            return contentUri;
         }
 
         // If the insert didn't succeed, then the rowID is <= 0. Throws an exception.
@@ -426,7 +386,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
     /**
      * This is called when a client calls
      * {@link android.content.ContentResolver#delete(Uri, String, String[])}.
-     * Deletes records from the database. If the incoming URI matches the note ID URI pattern,
+     * Deletes records from the database. If the incoming URI matches the task ID URI pattern,
      * this method deletes the one record specified by the ID in the URI. Otherwise, it deletes a
      * a set of records. The record or records must also match the input selection criteria
      * specified by where and whereArgs.
@@ -448,29 +408,29 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         // Does the delete based on the incoming URI pattern.
         switch (sUriMatcher.match(uri)) {
 
-            // If the incoming pattern matches the general pattern for notes, does a delete
+            // If the incoming pattern matches the general pattern for tasks, does a delete
             // based on the incoming "where" columns and arguments.
-            case DOINGS:
+            case TASKS:
                 count = db.delete(
-                        TimeSheetTable.TABLE_NAME,  // The database table name
+                        TaskTable.TABLE_NAME,  // The database table name
                         where,                     // The incoming where clause column names
                         whereArgs                  // The incoming where clause values
                 );
                 break;
 
-            // If the incoming URI matches a single note ID, does the delete based on the
+            // If the incoming URI matches a single task ID, does the delete based on the
             // incoming data, but modifies the where clause to restrict it to the
-            // particular note ID.
-            case NOTE_ID:
+            // particular task ID.
+            case TASK_ID:
                 /*
                  * Starts a final WHERE clause by restricting it to the
-                 * desired note ID.
+                 * desired task ID.
                  */
                 finalWhere =
-                        TimeSheetTable._ID +                              // The ID column name
+                        TaskTable._ID +                              // The ID column name
                                 " = " +                                          // test for equality
-                                uri.getPathSegments().                           // the incoming note ID
-                                        get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION)
+                                uri.getPathSegments().                           // the incoming task ID
+                                        get(WorkInterruption.Task.PATH_POSITION_TASK_ID)
                 ;
 
                 // If there were additional selection criteria, append them to the final
@@ -481,7 +441,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
                 // Performs the delete.
                 count = db.delete(
-                        TimeSheetTable.TABLE_NAME,  // The database table name.
+                        TaskTable.TABLE_NAME,  // The database table name.
                         finalWhere,                // The final WHERE clause
                         whereArgs                  // The incoming where clause values.
                 );
@@ -507,7 +467,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
      * {@link android.content.ContentResolver#update(Uri,ContentValues,String,String[])}
      * Updates records in the database. The column names specified by the keys in the values map
      * are updated with new data specified by the values in the map. If the incoming URI matches the
-     * note ID URI pattern, then the method updates the one record specified by the ID in the URI;
+     * task ID URI pattern, then the method updates the one record specified by the ID in the URI;
      * otherwise, it updates a set of records. The record or records must match the input
      * selection criteria specified by where and whereArgs.
      * If rows were updated, then listeners are notified of the change.
@@ -533,34 +493,34 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
         // Does the update based on the incoming URI pattern
         switch (sUriMatcher.match(uri)) {
 
-            // If the incoming URI matches the general notes pattern, does the update based on
+            // If the incoming URI matches the general tasks pattern, does the update based on
             // the incoming data.
-            case DOINGS:
+            case TASKS:
 
                 // Does the update and returns the number of rows updated.
                 count = db.update(
-                        TimeSheetTable.TABLE_NAME, // The database table name.
+                        TaskTable.TABLE_NAME, // The database table name.
                         values,                   // A map of column names and new values to use.
                         where,                    // The where clause column names.
                         whereArgs                 // The where clause column values to select on.
                 );
                 break;
 
-            // If the incoming URI matches a single note ID, does the update based on the incoming
-            // data, but modifies the where clause to restrict it to the particular note ID.
-            case NOTE_ID:
-                // From the incoming URI, get the note ID
-                String noteId = uri.getPathSegments().get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION);
+            // If the incoming URI matches a single task ID, does the update based on the incoming
+            // data, but modifies the where clause to restrict it to the particular task ID.
+            case TASK_ID:
+                // From the incoming URI, get the task ID
+                String taskId = uri.getPathSegments().get(WorkInterruption.Task.PATH_POSITION_TASK_ID);
 
                 /*
                  * Starts creating the final WHERE clause by restricting it to the incoming
-                 * note ID.
+                 * task ID.
                  */
                 finalWhere =
-                        TimeSheetTable._ID +                              // The ID column name
+                        TaskTable._ID +                              // The ID column name
                                 " = " +                                          // test for equality
-                                uri.getPathSegments().                           // the incoming note ID
-                                        get(WorkInterruption.TimeSheet.NOTE_ID_PATH_POSITION)
+                                uri.getPathSegments().                           // the incoming task ID
+                                        get(WorkInterruption.Task.PATH_POSITION_TASK_ID)
                 ;
 
                 // If there were additional selection criteria, append them to the final WHERE
@@ -572,7 +532,7 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
 
                 // Does the update and returns the number of rows updated.
                 count = db.update(
-                        TimeSheetTable.TABLE_NAME, // The database table name.
+                        TaskTable.TABLE_NAME, // The database table name.
                         values,                   // A map of column names and new values to use.
                         finalWhere,               // The final WHERE clause to use
                         // placeholders for whereArgs
@@ -596,14 +556,14 @@ public class WorkInterruptionProvider extends ContentProvider implements Content
     }
 
     /**
-     * A test package can call this to get a handle to the database underlying NotePadProvider,
+     * A test package can call this to get a handle to the database underlying Provider,
      * so it can insert test data into the database. The test case class is responsible for
      * instantiating the provider in a test context; {@link android.test.ProviderTestCase2} does
      * this during the call to setUp()
      *
      * @return a handle to the database helper object for the provider's data.
      */
-    WorkInterruptionSQLite getOpenHelperForTest() {
+    SQLiteHelper getOpenHelperForTest() {
         return mOpenHelper;
     }
 }

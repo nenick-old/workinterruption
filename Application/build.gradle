@@ -18,6 +18,7 @@ dependencies {
 
     instrumentTestCompile ('com.google.dexmaker:dexmaker:1.0')
     instrumentTestCompile ('com.google.dexmaker:dexmaker-mockito:1.0')
+    instrumentTestCompile ('com.squareup:fest-android:1.0.5')
 }
 
 android {

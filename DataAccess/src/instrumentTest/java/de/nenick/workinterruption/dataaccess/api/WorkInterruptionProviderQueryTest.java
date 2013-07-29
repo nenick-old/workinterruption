@@ -4,9 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.test.ProviderTestCase2;
 
-import de.nenick.workinterruption.dataaccess.TimeSheetTable;
-import de.nenick.workinterruption.dataaccess.api.WorkInterruption;
-import de.nenick.workinterruption.dataaccess.api.WorkInterruptionProvider;
+import static de.nenick.workinterruption.dataaccess.api.WorkInterruption.Task;
 
 public class WorkInterruptionProviderQueryTest extends ProviderTestCase2 {
 
@@ -18,16 +16,25 @@ public class WorkInterruptionProviderQueryTest extends ProviderTestCase2 {
 
         // given: some record
         ContentValues values = new ContentValues();
-        values.put(TimeSheetTable.COL_CATEGORY, "testCategory");
-        getProvider().insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
-        getProvider().insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
+        values.put(Task.VALUE_CATEGORY, "testCategory");
+        getProvider().insert(Task.CONTENT_URI, values);
+        getProvider().insert(Task.CONTENT_URI, values);
 
         // when: query for list
-        String[] projection = {TimeSheetTable._ID, TimeSheetTable.COL_BEGAN, TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_DURATION};
-        Cursor result = getProvider().query(WorkInterruption.TimeSheet.CONTENT_URI, projection, TimeSheetTable.COL_DURATION + " = ?s ", new String[] {"ff"}, null);
+        String[] projection = {Task.VALUE_ID, Task.VALUE_STARTED, Task.VALUE_CATEGORY, Task.VALUE_DURATION};
+        Cursor result = getProvider().query(Task.CONTENT_URI, projection, Task.VALUE_DURATION + " is null ", null, null);
 
         // then: the result contains all records
         assertEquals(2, result.getCount());
     }
 
+    public void testShouldProduceEmptyCursor() {
+
+        // when: query for list
+        String[] projection = {Task.VALUE_ID, Task.VALUE_STARTED, Task.VALUE_CATEGORY, Task.VALUE_DURATION};
+        Cursor result = getProvider().query(Task.CONTENT_URI, projection, Task.VALUE_DURATION + " is null ", null, null);
+
+        // then: the result contains all records
+        assertEquals(0, result.getCount());
+    }
 }

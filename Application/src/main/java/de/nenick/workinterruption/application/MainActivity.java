@@ -1,59 +1,48 @@
 package de.nenick.workinterruption.application;
 
-import android.content.ContentValues;
+import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.CompoundButton;
+import android.widget.ListView;
 import android.widget.Switch;
 
 import de.nenick.workinterruption.R;
-import de.nenick.workinterruption.application.functions.GetOpenDoingsLoader;
-import de.nenick.workinterruption.dataaccess.TimeSheetTable;
-import de.nenick.workinterruption.dataaccess.api.WorkInterruption;
+import de.nenick.workinterruption.application.functions.GetOpenTasksFromBundleFunction;
+import de.nenick.workinterruption.application.functions.GetOpenTasksFromProviderFunction;
+import de.nenick.workinterruption.application.functions.GetTaskListFunction;
+import de.nenick.workinterruption.application.functions.SaveOpenTasksToBundleFunction;
+import de.nenick.workinterruption.application.functions.SaveOpenTasksToProviderFunction;
+import de.nenick.workinterruption.application.functions.SetStatesFromOpenTasksFuncton;
+
+import static de.nenick.workinterruption.dataaccess.api.WorkInterruption.Task;
 
 
 public class MainActivity extends Activity {
 
-    private SwitchListener isWorkActive = new SwitchListener();
-    private SwitchListener isBreakActive = new SwitchListener();
-    private SwitchListener isMeetingActive = new SwitchListener();
-    private SwitchListener isInterruptActive = new SwitchListener();
+    private TaskSwitchManager isWorkActive = new TaskSwitchManager("work", R.id.work_toggle, this);
+    private TaskSwitchManager isBreakActive = new TaskSwitchManager("break", R.id.break_toggle, this);
+    private TaskSwitchManager isMeetingActive = new TaskSwitchManager("meeting", R.id.meeting_toggle, this);
+    private TaskSwitchManager isInterruptActive = new TaskSwitchManager("interruption", R.id.interrupt_toggle, this);
+    private TaskSwitchManager[] allTaskManager = new TaskSwitchManager[]{isWorkActive, isBreakActive, isMeetingActive, isInterruptActive};
 
-    private GetOpenDoingsLoader openDoingsLoader = new GetOpenDoingsLoader();
+
+    private GetOpenTasksFromProviderFunction getOpenTasksFromProviderFunction = new GetOpenTasksFromProviderFunction();
+    private GetOpenTasksFromBundleFunction getOpenTasksFromBundleFunction = new GetOpenTasksFromBundleFunction();
+    private SaveOpenTasksToProviderFunction saveOpenTasksToProviderFunction = new SaveOpenTasksToProviderFunction();
+    private SaveOpenTasksToBundleFunction saveOpenTasksToBundleFunction = new SaveOpenTasksToBundleFunction();
+    private SetStatesFromOpenTasksFuncton setStatesFromOpenTasksFuncton = new SetStatesFromOpenTasksFuncton();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(savedInstanceState != null) {
-            if( savedInstanceState.getInt("work", 0) > 0) {
-                isWorkActive.setBegan(savedInstanceState.getInt("work"));
-                ((Switch) findViewById(R.id.work_toggle)).setChecked(true);
-            }
-
-            if( savedInstanceState.getInt("break", 0) > 0) {
-                isBreakActive.setBegan(savedInstanceState.getInt("break"));
-                ((Switch) findViewById(R.id.break_toggle)).setChecked(true);
-            }
-            if( savedInstanceState.getInt("meeting", 0) > 0) {
-                isMeetingActive.setBegan(savedInstanceState.getInt("meeting"));
-                ((Switch) findViewById(R.id.meeting_toggle)).setChecked(true);
-            }
-            if( savedInstanceState.getInt("interrupt", 0) > 0) {
-                isInterruptActive.setBegan(savedInstanceState.getInt("interrupt"));
-                ((Switch) findViewById(R.id.interrupt_toggle)).setChecked(true);
-            }
-        } else {
-            openDoingsLoader.setCallback(this);
-            openDoingsLoader.setContext(this);
-            getLoaderManager().initLoader(21, null, openDoingsLoader);
+        if (savedInstanceState != null) {
+            getOpenTasksFromBundleFunction.apply(savedInstanceState, this, allTaskManager);
         }
-
 
         ((Switch) findViewById(R.id.work_toggle)).setOnCheckedChangeListener(isWorkActive);
         ((Switch) findViewById(R.id.break_toggle)).setOnCheckedChangeListener(isBreakActive);
@@ -61,29 +50,33 @@ public class MainActivity extends Activity {
         ((Switch) findViewById(R.id.interrupt_toggle)).setOnCheckedChangeListener(isInterruptActive);
     }
 
-    public void onOpenDoings(Cursor cursor) {
-        while (cursor.moveToNext()) {
-            long begun = cursor.getLong(cursor.getColumnIndex(TimeSheetTable.COL_BEGAN));
-            String category = cursor.getString(cursor.getColumnIndex(TimeSheetTable.COL_CATEGORY));
-            if( category.equals(((Switch) findViewById(R.id.work_toggle)).getText())) {
-                isWorkActive.setBegan(begun);
-                ((Switch) findViewById(R.id.work_toggle)).setChecked(true);
-            }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //new GetTaskListFunction().apply(this, new ListView(getBaseContext()));
+        getOpenTasksFromProviderFunction.apply(this);
+    }
 
-            if( category.equals(((Switch) findViewById(R.id.work_toggle)).getText())) {
-                isBreakActive.setBegan(begun);
-                ((Switch) findViewById(R.id.break_toggle)).setChecked(true);
-            }
-            if( category.equals(((Switch) findViewById(R.id.work_toggle)).getText())) {
-                isMeetingActive.setBegan(begun);
-                ((Switch) findViewById(R.id.meeting_toggle)).setChecked(true);
-            }
-            if( category.equals(((Switch) findViewById(R.id.work_toggle)).getText())) {
-                isInterruptActive.setBegan(begun);
-                ((Switch) findViewById(R.id.interrupt_toggle)).setChecked(true);
-            }
-        }
-        getLoaderManager().destroyLoader(21);
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        getOpenTasksFromBundleFunction.apply(savedInstanceState, this, allTaskManager);
+    }
+
+    public void onOpenTasksLoaded(Cursor cursor) {
+        setStatesFromOpenTasksFuncton.apply(cursor, this, allTaskManager);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveOpenTasksToProviderFunction.apply(this, allTaskManager);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        saveOpenTasksToBundleFunction.apply(outState, allTaskManager);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -98,39 +91,11 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_list:
-                Intent i = new Intent(this, DoingListActivity.class);
+                Intent i = new Intent(this, TaskListActivity.class);
                 startActivity(i);
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    public class SwitchListener implements CompoundButton.OnCheckedChangeListener {
-
-        private long began = 0;
-
-        @Override
-        public void onCheckedChanged(CompoundButton compoundButton, boolean isActive) {
-
-            if(isActive) {
-                began = System.currentTimeMillis();
-            } else {
-                ContentValues values = new ContentValues();
-                values.put(TimeSheetTable.COL_CATEGORY, compoundButton.getText().toString());
-                values.put(TimeSheetTable.COL_BEGAN, began);
-                values.put(TimeSheetTable.COL_DURATION, (int) (System.currentTimeMillis() - began));
-
-                getContentResolver().insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
-                began = 0;
-            }
-        }
-
-        public void setBegan(long began) {
-            this.began = began;
-        }
-
-        public long getBegan() {
-            return began;
-        }
-    }
 }

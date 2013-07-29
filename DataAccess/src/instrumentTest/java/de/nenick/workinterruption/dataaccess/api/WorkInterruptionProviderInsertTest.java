@@ -6,9 +6,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.test.ProviderTestCase2;
 
-import de.nenick.workinterruption.dataaccess.TimeSheetTable;
-import de.nenick.workinterruption.dataaccess.api.WorkInterruption;
-import de.nenick.workinterruption.dataaccess.api.WorkInterruptionProvider;
+import static de.nenick.workinterruption.dataaccess.api.WorkInterruption.Task;
 
 public class WorkInterruptionProviderInsertTest extends ProviderTestCase2 {
 
@@ -20,10 +18,10 @@ public class WorkInterruptionProviderInsertTest extends ProviderTestCase2 {
 
         // given: necessary values for a record
         ContentValues values = new ContentValues();
-        values.put(TimeSheetTable.COL_CATEGORY, "testCategory");
+        values.put(Task.VALUE_CATEGORY, "testCategory");
 
         // when: values are insert
-        Uri rowUri = getProvider().insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
+        Uri rowUri = getProvider().insert(Task.CONTENT_URI, values);
 
         // then: record was created
         long rowId = ContentUris.parseId(rowUri);
@@ -34,16 +32,16 @@ public class WorkInterruptionProviderInsertTest extends ProviderTestCase2 {
 
         // given: necessary values for a record
         ContentValues values = new ContentValues();
-        values.put(TimeSheetTable.COL_CATEGORY, "testCategory");
+        values.put(Task.VALUE_CATEGORY, "testCategory");
 
         // when: values are insert
-        getProvider().insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
+        getProvider().insert(Task.CONTENT_URI, values);
 
         // then: then record contains start timestamp
-        String[] projection = {TimeSheetTable._ID, TimeSheetTable.COL_BEGAN, TimeSheetTable.COL_CATEGORY, TimeSheetTable.COL_DURATION};
-        Cursor result = getProvider().query(WorkInterruption.TimeSheet.CONTENT_URI, projection, null, null, null);
+        String[] projection = {Task.VALUE_ID, Task.VALUE_STARTED, Task.VALUE_CATEGORY, Task.VALUE_DURATION};
+        Cursor result = getProvider().query(Task.CONTENT_URI, projection, null, null, null);
         result.moveToNext();
-        assertTrue("should contains start a timestamp", result.getInt(result.getColumnIndex(TimeSheetTable.COL_BEGAN)) > 0);
+        assertTrue("should contains start timestamp", result.getInt(result.getColumnIndex(Task.VALUE_STARTED)) > 0);
     }
 
     public void testInsertFailsForMissingValues() {
@@ -53,7 +51,7 @@ public class WorkInterruptionProviderInsertTest extends ProviderTestCase2 {
 
         // when: values are insert
         try {
-            getProvider().insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
+            getProvider().insert(Task.CONTENT_URI, values);
             fail("exception expected");
         } catch (IllegalArgumentException e) {
             // then: record was not inserted
@@ -67,7 +65,7 @@ public class WorkInterruptionProviderInsertTest extends ProviderTestCase2 {
 
         // when: values are insert
         try {
-            getProvider().insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
+            getProvider().insert(Task.CONTENT_URI, values);
             fail("exception expected");
         } catch (IllegalArgumentException e) {
             // then: record was not inserted
@@ -78,7 +76,7 @@ public class WorkInterruptionProviderInsertTest extends ProviderTestCase2 {
 
         // given: necessary values for a record
         ContentValues values = new ContentValues();
-        values.put(TimeSheetTable.COL_CATEGORY, "testCategory");
+        values.put(Task.VALUE_CATEGORY, "testCategory");
 
         // and: wrong uri
         Uri uri = Uri.parse("/wrong_uri");

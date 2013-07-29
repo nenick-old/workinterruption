@@ -18,16 +18,15 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
-import de.nenick.workinterruption.dataaccess.TimeSheetTable;
+import de.nenick.workinterruption.dataaccess.database.TaskTable;
 
-/**
- * Created by nenick on 7/20/13.
- */
+
+// TODO delete after have example for insert / delete ...
 public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkInterruptionProvider> {
 
     // A URI that the provider does not offer, for testing error handling.
     private static final Uri INVALID_URI =
-            Uri.withAppendedPath(WorkInterruption.TimeSheet.CONTENT_URI, "invalid");
+            Uri.withAppendedPath(WorkInterruption.Task.CONTENT_URI, "invalid");
 
     // Contains a reference to the mocked content resolver for the provider under test.
     private MockContentResolver mMockResolver;
@@ -129,8 +128,8 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
             // Adds a record to the database.
             mDb.insertOrThrow(
-                    TimeSheetTable.TABLE_NAME,             // the table name for the insert
-                    TimeSheetTable.COL_BEGAN,      // column set to null if empty values map
+                    TaskTable.TABLE_NAME,             // the table name for the insert
+                    TaskTable.COL_STARTED,      // column set to null if empty values map
                     TEST_NOTES[index].getContentValues()  // the values map to insert
             );
         }
@@ -143,15 +142,15 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
      */
     public void testUriAndGetType() {
         // Tests the MIME type for the notes table URI.
-        String mimeType = mMockResolver.getType(WorkInterruption.TimeSheet.CONTENT_URI);
-        assertEquals(WorkInterruption.TimeSheet.CONTENT_TYPE, mimeType);
+        String mimeType = mMockResolver.getType(WorkInterruption.Task.CONTENT_URI);
+        assertEquals(WorkInterruption.Task.CONTENT_TYPE, mimeType);
 
         // Creates a URI with a pattern for category ids. The id doesn't have to exist.
-        Uri noteIdUri = ContentUris.withAppendedId(WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE, 1);
+        Uri noteIdUri = ContentUris.withAppendedId(WorkInterruption.Task.CONTENT_ID_URI_BASE, 1);
 
         // Gets the category ID URI MIME type.
         mimeType = mMockResolver.getType(noteIdUri);
-        assertEquals(WorkInterruption.TimeSheet.CONTENT_ITEM_TYPE, mimeType);
+        assertEquals(WorkInterruption.Task.CONTENT_ITEM_TYPE, mimeType);
 
         // Tests an invalid URI. This should throw an IllegalArgumentException.
         mimeType = mMockResolver.getType(INVALID_URI);
@@ -165,7 +164,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         // Tests the notes table URI. This should return null, since the content provider does
         // not provide a stream MIME type for multiple notes.
-        assertNull(mMockResolver.getStreamTypes(WorkInterruption.TimeSheet.CONTENT_URI, MIME_TYPES_ALL));
+        assertNull(mMockResolver.getStreamTypes(WorkInterruption.Task.CONTENT_URI, MIME_TYPES_ALL));
 
         /*
          * Tests the category id URI for a single category, using _ID value "1" which is a valid ID. Uses a
@@ -174,7 +173,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
          */
 
         // Constructs the category id URI
-        Uri testUri = Uri.withAppendedPath(WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE, "1");
+        Uri testUri = Uri.withAppendedPath(WorkInterruption.Task.CONTENT_ID_URI_BASE, "1");
 
         // Gets the MIME types for the URI, with the filter that selects all MIME types.
         String mimeType[] = mMockResolver.getStreamTypes(testUri, MIME_TYPES_ALL);
@@ -195,7 +194,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
          * Tests with a URI that should not have any associated stream MIME types, but with a
          * filter that returns all types. The result should still be null.
          */
-        mimeType = mMockResolver.getStreamTypes(WorkInterruption.TimeSheet.CONTENT_URI, MIME_TYPES_ALL);
+        mimeType = mMockResolver.getStreamTypes(WorkInterruption.Task.CONTENT_URI, MIME_TYPES_ALL);
         assertNull(mimeType);
 
     }
@@ -219,7 +218,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         // Constructs a URI with a category ID of 1. This matches the category ID URI pattern that
         // openTypedAssetFile can handle.
-        testNoteIdUri = ContentUris.withAppendedId(WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE, 1);
+        testNoteIdUri = ContentUris.withAppendedId(WorkInterruption.Task.CONTENT_ID_URI_BASE, 1);
 
         // Opens the pipe. The opts argument is for passing options from a caller to the provider,
         // but the NotePadProvider does not use it.
@@ -259,7 +258,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
          */
         try {
             testAssetDescriptor = mMockResolver.openTypedAssetFileDescriptor(
-                    WorkInterruption.TimeSheet.CONTENT_URI,
+                    WorkInterruption.Task.CONTENT_URI,
                     MIME_TYPE_TEXT,
                     null
             );
@@ -324,7 +323,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         // Creates category ID URI for a category that should now be in the provider.
         noteIdUri = ContentUris.withAppendedId(
-                WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE,  // The base pattern for a category ID URI
+                WorkInterruption.Task.CONTENT_ID_URI_BASE,  // The base pattern for a category ID URI
                 1                                   // Sets the URI to point to record ID 1 in the
                 // provider
         );
@@ -395,14 +394,14 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
     public void testQueriesOnNotesUri() {
         // Defines a projection of column names to return for a query
         final String[] TEST_PROJECTION = {
-                TimeSheetTable.COL_BEGAN,
-                TimeSheetTable.COL_CATEGORY,
-                TimeSheetTable.COL_DURATION
+                TaskTable.COL_STARTED,
+                TaskTable.COL_CATEGORY,
+                TaskTable.COL_DURATION
         };
 
         // Defines a selection column for the query. When the selection columns are passed
         // to the query, the selection arguments replace the placeholders.
-        final String TITLE_SELECTION = TimeSheetTable.COL_BEGAN + " = " + "?";
+        final String TITLE_SELECTION = TaskTable.COL_STARTED + " = " + "?";
 
         // Defines the selection columns for a query.
         final String SELECTION_COLUMNS =
@@ -412,12 +411,12 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[0].day), Long.toString(TEST_NOTES[1].day), Long.toString(TEST_NOTES[5].day) };
 
         // Defines a query sort order
-        final String SORT_ORDER = TimeSheetTable.COL_BEGAN + " ASC";
+        final String SORT_ORDER = TaskTable.COL_STARTED + " ASC";
 
         // Query subtest 1.
         // If there are no records in the table, the returned cursor from a query should be empty.
         Cursor cursor = mMockResolver.query(
-                WorkInterruption.TimeSheet.CONTENT_URI,  // the URI for the main data table
+                WorkInterruption.Task.CONTENT_URI,  // the URI for the main data table
                 null,                       // no projection, get all columns
                 null,                       // no selection criteria, get all records
                 null,                       // no selection arguments
@@ -435,7 +434,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         // Gets all the columns for all the rows in the table
         cursor = mMockResolver.query(
-                WorkInterruption.TimeSheet.CONTENT_URI,  // the URI for the main data table
+                WorkInterruption.Task.CONTENT_URI,  // the URI for the main data table
                 null,                       // no projection, get all columns
                 null,                       // no selection criteria, get all records
                 null,                       // no selection arguments
@@ -450,7 +449,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         // A query that uses a projection should return a cursor with the same number of columns
         // as the projection, with the same names, in the same order.
         Cursor projectionCursor = mMockResolver.query(
-                WorkInterruption.TimeSheet.CONTENT_URI,  // the URI for the main data table
+                WorkInterruption.Task.CONTENT_URI,  // the URI for the main data table
                 TEST_PROJECTION,            // get the day, category, and mod date columns
                 null,                       // no selection columns, get all the records
                 null,                       // no selection criteria
@@ -470,7 +469,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         // A query that uses selection criteria should return only those rows that match the
         // criteria. Use a projection so that it's easy to get the data in a particular column.
         projectionCursor = mMockResolver.query(
-                WorkInterruption.TimeSheet.CONTENT_URI, // the URI for the main data table
+                WorkInterruption.Task.CONTENT_URI, // the URI for the main data table
                 TEST_PROJECTION,           // get the day, category, and mod date columns
                 SELECTION_COLUMNS,         // select on the day column
                 SELECTION_ARGS,            // select titles "Note0", "Note1", or "Note5"
@@ -504,27 +503,27 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
     public void testQueriesOnNoteIdUri() {
         // Defines the selection column for a query. The "?" is replaced by entries in the
         // selection argument array
-        final String SELECTION_COLUMNS = TimeSheetTable.COL_BEGAN + " = " + "?";
+        final String SELECTION_COLUMNS = TaskTable.COL_STARTED + " = " + "?";
 
         // Defines the argument for the selection column.
         final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[1].day) };
 
         // A sort order for the query.
-        final String SORT_ORDER = TimeSheetTable.COL_BEGAN + " ASC";
+        final String SORT_ORDER = TaskTable.COL_STARTED + " ASC";
 
         // Creates a projection includes the category id column, so that category id can be retrieved.
         final String[] NOTE_ID_PROJECTION = {
-                TimeSheetTable._ID,                 // The TimeSheet class extends BaseColumns,
+                TaskTable._ID,                 // The Task class extends BaseColumns,
                 // which includes _ID as the column name for the
                 // record's id in the data model
-                TimeSheetTable.COL_BEGAN};  // The category's day
+                TaskTable.COL_STARTED};  // The category's day
 
         // Query subtest 1.
         // Tests that a query against an empty table returns null.
 
         // Constructs a URI that matches the provider's notes id URI pattern, using an arbitrary
         // value of 1 as the category ID.
-        Uri noteIdUri = ContentUris.withAppendedId(WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE, 1);
+        Uri noteIdUri = ContentUris.withAppendedId(WorkInterruption.Task.CONTENT_ID_URI_BASE, 1);
 
         // Queries the table with the notes ID URI. This should return an empty cursor.
         Cursor cursor = mMockResolver.query(
@@ -547,7 +546,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         // Queries the table using the URI for the full table.
         cursor = mMockResolver.query(
-                WorkInterruption.TimeSheet.CONTENT_URI, // the base URI for the table
+                WorkInterruption.Task.CONTENT_URI, // the base URI for the table
                 NOTE_ID_PROJECTION,        // returns the ID and day columns of rows
                 SELECTION_COLUMNS,         // select based on the day column
                 SELECTION_ARGS,            // select day of "Note1"
@@ -564,7 +563,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         int inputNoteId = cursor.getInt(0);
 
         // Builds a URI based on the provider's content ID URI base and the saved category ID.
-        noteIdUri = ContentUris.withAppendedId(WorkInterruption.TimeSheet.CONTENT_ID_URI_BASE, inputNoteId);
+        noteIdUri = ContentUris.withAppendedId(WorkInterruption.Task.CONTENT_ID_URI_BASE, inputNoteId);
 
         // Queries the table using the content ID URI, which returns a single record with the
         // specified category ID, matching the selection criteria provided.
@@ -603,7 +602,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         // Inserts a row using the new category instance.
         // No assertion will be done. The insert() method either works or throws an Exception
         Uri rowUri = mMockResolver.insert(
-                WorkInterruption.TimeSheet.CONTENT_URI,  // the main table URI
+                WorkInterruption.Task.CONTENT_URI,  // the main table URI
                 note.getContentValues()     // the map of values to insert as a new record
         );
 
@@ -613,7 +612,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         // Does a full query on the table. Since insertData() hasn't yet been called, the
         // table should only contain the record just inserted.
         Cursor cursor = mMockResolver.query(
-                WorkInterruption.TimeSheet.CONTENT_URI, // the main table URI
+                WorkInterruption.Task.CONTENT_URI, // the main table URI
                 null,                      // no projection, return all the columns
                 null,                      // no selection criteria, return all the rows in the model
                 null,                      // no selection arguments
@@ -627,9 +626,9 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         assertTrue(cursor.moveToFirst());
 
         // Since no projection was used, get the column indexes of the returned columns
-        int titleIndex = cursor.getColumnIndex(TimeSheetTable.COL_BEGAN);
-        int noteIndex = cursor.getColumnIndex(TimeSheetTable.COL_CATEGORY);
-        int moddateIndex = cursor.getColumnIndex(TimeSheetTable.COL_DURATION);
+        int titleIndex = cursor.getColumnIndex(TaskTable.COL_STARTED);
+        int noteIndex = cursor.getColumnIndex(TaskTable.COL_CATEGORY);
+        int moddateIndex = cursor.getColumnIndex(TaskTable.COL_DURATION);
 
         // Tests each column in the returned cursor against the data that was inserted, comparing
         // the field in the InterruptInfo object to the data at the column index in the cursor.
@@ -644,12 +643,12 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         ContentValues values = note.getContentValues();
 
         // Adds the category ID retrieved in subtest 1 to the ContentValues object.
-        values.put(TimeSheetTable._ID, (int) noteId);
+        values.put(TaskTable._ID, (int) noteId);
 
         // Tries to insert this record into the table. This should fail and drop into the
         // catch block. If it succeeds, issue a failure message.
         try {
-            rowUri = mMockResolver.insert(WorkInterruption.TimeSheet.CONTENT_URI, values);
+            rowUri = mMockResolver.insert(WorkInterruption.Task.CONTENT_URI, values);
             fail("Expected insert failure for existing record but insert succeeded.");
         } catch (Exception e) {
             // succeeded, so do nothing.
@@ -664,14 +663,14 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         // Tries to delete a record from a data model that is empty.
 
         // Sets the selection column
-        final String SELECTION_COLUMNS = TimeSheetTable.COL_BEGAN + " = " + "?";
+        final String SELECTION_COLUMNS = TaskTable.COL_STARTED + " = " + "?";
 
         // Sets the selection argument "Note0"
         final String[] SELECTION_ARGS = { Long.toString(TEST_NOTES[0].day) };
 
         // Tries to delete rows matching the selection criteria from the data model.
         int rowsDeleted = mMockResolver.delete(
-                WorkInterruption.TimeSheet.CONTENT_URI, // the base URI of the table
+                WorkInterruption.Task.CONTENT_URI, // the base URI of the table
                 SELECTION_COLUMNS,         // select based on the day column
                 SELECTION_ARGS             // select day = "Note0"
         );
@@ -687,7 +686,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         // Uses the same parameters to try to delete the row with day "Note0"
         rowsDeleted = mMockResolver.delete(
-                WorkInterruption.TimeSheet.CONTENT_URI, // the base URI of the table
+                WorkInterruption.Task.CONTENT_URI, // the base URI of the table
                 SELECTION_COLUMNS,         // same selection column, "day"
                 SELECTION_ARGS             // same selection arguments, day = "Note0"
         );
@@ -700,7 +699,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         // Queries the table with the same selection column and argument used to delete the row.
         Cursor cursor = mMockResolver.query(
-                WorkInterruption.TimeSheet.CONTENT_URI, // the base URI of the table
+                WorkInterruption.Task.CONTENT_URI, // the base URI of the table
                 null,                      // no projection, return all columns
                 SELECTION_COLUMNS,         // select based on the day column
                 SELECTION_ARGS,            // select day = "Note0"
@@ -716,7 +715,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
      */
     public void testUpdates() {
         // Selection column for identifying a record in the data model.
-        final String SELECTION_COLUMNS = TimeSheetTable.COL_BEGAN + " = " + "?";
+        final String SELECTION_COLUMNS = TaskTable.COL_STARTED + " = " + "?";
 
         // Selection argument for the selection column.
         final String[] selectionArgs = { Long.toString(TEST_NOTES[1].day) };
@@ -728,11 +727,11 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
         // Tries to update a record in an empty table.
 
         // Sets up the update by putting the "category" column and a value into the values map.
-        values.put(TimeSheetTable.COL_CATEGORY, "Testing an update with this string");
+        values.put(TaskTable.COL_CATEGORY, "Testing an update with this string");
 
         // Tries to update the table
         int rowsUpdated = mMockResolver.update(
-                WorkInterruption.TimeSheet.CONTENT_URI,  // the URI of the data table
+                WorkInterruption.Task.CONTENT_URI,  // the URI of the data table
                 values,                     // a map of the updates to do (column day and value)
                 SELECTION_COLUMNS,           // select based on the day column
                 selectionArgs               // select "day = Note1"
@@ -749,7 +748,7 @@ public class ExampleWorkInterruptionProviderTest extends ProviderTestCase2<WorkI
 
         //  Does the update again, using the same arguments as in subtest 1.
         rowsUpdated = mMockResolver.update(
-                WorkInterruption.TimeSheet.CONTENT_URI,   // The URI of the data table
+                WorkInterruption.Task.CONTENT_URI,   // The URI of the data table
                 values,                      // the same map of updates
                 SELECTION_COLUMNS,            // same selection, based on the day column
                 selectionArgs                // same selection argument, to select "day = Note1"

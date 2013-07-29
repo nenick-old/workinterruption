@@ -2,8 +2,9 @@ package de.nenick.workinterruption.dataaccess.api;
 
 import android.content.ContentValues;
 
-import de.nenick.workinterruption.dataaccess.TimeSheetTable;
+import de.nenick.workinterruption.dataaccess.database.TaskTable;
 
+// TODO delete after have example for insert / delete ...
 // A utility for converting category data to a ContentValues map.
 public class InterruptInfo {
     long day;
@@ -42,9 +43,9 @@ public class InterruptInfo {
         ContentValues v = new ContentValues();
 
         // Adds map entries for the user-controlled fields in the map
-        v.put(TimeSheetTable.COL_BEGAN, day);
-        v.put(TimeSheetTable.COL_CATEGORY, category);
-        v.put(TimeSheetTable.COL_DURATION, ended);
+        v.put(TaskTable.COL_STARTED, day);
+        v.put(TaskTable.COL_CATEGORY, category);
+        v.put(TaskTable.COL_DURATION, ended);
         return v;
 
     }

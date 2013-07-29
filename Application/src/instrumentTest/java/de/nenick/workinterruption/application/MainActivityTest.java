@@ -1,14 +1,28 @@
 package de.nenick.workinterruption.application;
 
 import android.test.ActivityInstrumentationTestCase2;
-import android.test.ActivityUnitTestCase;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import de.nenick.workinterruption.R;
-import de.nenick.workinterruption.application.MainActivity;
+import de.nenick.workinterruption.application.functions.SaveOpenTasksToBundleFunction;
+import de.nenick.workinterruption.application.functions.SaveOpenTasksToProviderFunction;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActivity> {
 
-    private MainActivity activity;
+    @InjectMocks
+    MainActivity activity;
+
+    @Mock
+    SaveOpenTasksToProviderFunction saveOpenTasksToProviderFunction;
+
+    @Mock
+    SaveOpenTasksToBundleFunction saveOpenTasksToBundleFunction;
 
     public MainActivityTest() {
         super(MainActivity.class);
@@ -18,6 +32,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void setUp() throws Exception {
         super.setUp();
         activity = getActivity();
+
+        MockitoAnnotations.initMocks(this);
     }
 
     public void testLayout() {
@@ -26,5 +42,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull(activity.findViewById(R.id.break_toggle));
         assertNotNull(activity.findViewById(R.id.meeting_toggle));
         assertNotNull(activity.findViewById(R.id.interrupt_toggle));
+    }
+
+    public void testShouldSaveOpenTasksStateAtPause() {
+        getInstrumentation().callActivityOnPause(activity);
+        //verify(saveOpenTasksToProviderFunction).apply();
+        //verify(saveOpenTasksToBundleFunction).apply();
     }
 }
